@@ -16,6 +16,7 @@ from matplotlib.patches import Patch, Rectangle
 import numpy as np
 
 from navsim import run_comparison
+from plot_settings import apply_plot_style
 from world import GOAL, H, START, W, box_mask, offsets_disk
 
 ERROR_CM = 5
@@ -54,22 +55,21 @@ def draw_box(ax, box, color, label=None, nominal=False):
     if label:
         on_fill = not nominal
         ax.text(col + width / 2, row + height / 2, label,
-                ha="center", va="center", fontsize=10, fontweight="bold",
+                ha="center", va="center", fontsize=16,
                 color="white" if on_fill else "#142438", zorder=5)
 
 
+@apply_plot_style("map")
 def draw_map(truth, footprint_count, output):
-    fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.6))
+    fig, axes = plt.subplots(1, 2)
     # fig.subplots_adjust(left=.067, right=.981, bottom=.22, top=.79, wspace=.12)
     # fig.text(.067, .94, "Four-box touch navigation map",
     #          fontsize=24, fontweight="bold", color="#142438")
-    fig.suptitle("Four-box touch navigation map", fontsize=24)
-    fig.text(.067, .878, "60 × 40 cm workspace   •   1 cm grid   •   5 cm placement-error bound",
-             fontsize=12)
-    axes[0].set_title("Possible footprints from the rough map", loc="left",
-                      fontsize=16, pad=12)
-    axes[1].set_title("Actual fixed positions", loc="left",
-                      fontsize=16, pad=12)
+    fig.suptitle("Four-box touch navigation map")
+    # fig.text(.067, .878, "60 × 40 cm workspace   •   1 cm grid   •   5 cm placement-error bound",
+    #          fontsize=12)
+    axes[0].set_title("Possible footprints from the rough map", loc="left")
+    axes[1].set_title("Actual fixed positions", loc="left")
     axes[0].imshow(np.minimum(footprint_count, 2), origin="lower",
                    extent=(0, W, 0, H), interpolation="nearest", vmin=0, vmax=2,
                    cmap=ListedColormap(["#ffffff", "#d4e6f3", "#c4a1dc"]))
@@ -77,19 +77,15 @@ def draw_map(truth, footprint_count, output):
         ax.set(xlim=(0, W), ylim=(0, H), aspect="equal", xlabel="x (cm)")
         ax.set_xticks(range(0, W + 1, 10))
         ax.set_yticks(range(0, H + 1, 10))
-        ax.grid(color="#c1ccd8", linewidth=.6, alpha=.6)
-        ax.tick_params(labelsize=9, colors="#465669", length=3)
-        for spine in ax.spines.values():
-            spine.set_color("#9aaabc")
         for cell, label, marker, color in [
-            (START, "Start", "o", "#13745d"),
-            (GOAL, "Goal", "*", "#a32936"),
+            (START, "Start", "o", "green"),
+            (GOAL, "Goal", "*", "red"),
         ]:
             row, col = cell
             ax.plot(col + .5, row + .5, marker, markersize=9, color=color, zorder=7)
             ax.annotate(label, (col + .5, row + .5), xytext=(0, -14),
                         textcoords="offset points", ha="center", color=color,
-                        fontsize=9, fontweight="bold", zorder=7)
+                        fontsize=9, zorder=7)
     axes[0].set_ylabel("y (cm)")
     axes[1].plot([START[1] + .5, GOAL[1] + .5], [START[0] + .5, GOAL[0] + .5],
                  color="#6a7786", ls=":", lw=1.5, zorder=3)
@@ -97,24 +93,14 @@ def draw_map(truth, footprint_count, output):
         label = f"B{number}"
         draw_box(axes[0], nominal, color, label, nominal=True)
         draw_box(axes[1], actual, color, label)
-    left, right = truth[2:]
-    y = (max(left[0], right[0]) + min(left[0] + left[2], right[0] + right[2])) / 2
-    left_edge = left[1] + left[3]
-    right_edge = right[1]
-    axes[1].annotate("", (right_edge, y), (left_edge, y),
-                     arrowprops=dict(arrowstyle="|-|", color="#142438", lw=1.3), zorder=7)
-    axes[1].text((left_edge + right_edge) / 2, y + 1.1,
-                 f"{right_edge - left_edge:g} cm", ha="center",
-                 va="bottom", color="#142438", fontsize=9, fontweight="bold",
-                 bbox=dict(facecolor="white", edgecolor="none", pad=1), zorder=7)
     fig.legend(handles=[
-        Line2D([0], [0], color="#465669", ls="--", label="Nominal box"),
+        Line2D([0], [0], ls="--", label="Nominal box"),
         Patch(facecolor="#d4e6f3", label="Cell could contain one box"),
         Patch(facecolor="#c4a1dc", label="Possible footprints overlap"),
         Patch(facecolor="#007bac", label="Actual box"),
-        Line2D([0], [0], color="#6a7786", ls=":", label="Direct start–goal line"),
-    ], loc="lower center", bbox_to_anchor=(.5, .04), ncol=5, frameon=False, fontsize=9)
-    fig.savefig(output, dpi=175, facecolor="white")
+        Line2D([0], [0], ls=":", label="Direct start–goal line"),
+    ], bbox_to_anchor=(.5, 0), ncol=5)
+    fig.savefig(output)
     plt.close(fig)
 
 

@@ -46,19 +46,23 @@ completed distance, total distance, and elapsed wall-clock time. Contact cells a
 
 ## Generate the simulation plots
 
-From the project directory, run five trials for each of the eight navigation strategies.
+From the project directory, run one trial for each of the eight navigation strategies.
 
 ```bash
 python run_both_simulations.py
 ```
 
-The script saves four PNGs in `figures/` and writes `trial_results.csv` and
-`averages.csv` to `csv/`. The time chart compares the mean
-simulated time to goal across the eight strategies.
+The script saves the maps, time chart, and individual touch-navigation path
+PNGs directly in `figures/`. Within each strategy, identical trials share
+the first trial's plot. A shared key for the path symbols is saved as
+`figures/path_legend.png`. The CSV results are saved to `csv/`.
 
-Add `--animate` to save `animation/simulation_animation.gif`.
-The GIF replays the first trial for each strategy on a shared clock at 12×
-speed and shows the probe's route, contacts and retreats, edge-following
+Edit `plot_settings.py` to change shared Matplotlib defaults or adjust the
+size, fonts, spacing, and grid for an individual figure or the GIF replay.
+
+Add `--animate` to save eight individual GIFs and the combined
+`simulation_animation.gif` in `animation/`. The GIFs replay the first trial
+at 12× speed and show the probe's route, contacts and retreats, edge-following
 moves, and clear checks.
 
 ```bash
