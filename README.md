@@ -53,9 +53,10 @@ python run_both_simulations.py
 ```
 
 The script saves the maps, individual paths, and a combined view of the
-eight paths in `figures/`. It also writes `strategy_metrics.pdf` with
-contact counts and simulated times, `time_by_strategy.png` with the timing
-comparison, and `path_legend.png` with the path symbols. Results are written
+eight paths in `figures/`. It also writes `strategy_metrics.pdf` to compare
+total distance traveled (including retreats), simulated time, and obstacle
+contacts for all eight strategies. It saves `time_by_strategy.png` with the
+timing comparison and `path_legend.png` with the path symbols. Results are written
 to `csv/trial_results.csv` and `csv/averages.csv`. With one trial per strategy,
 each average equals the corresponding trial value.
 

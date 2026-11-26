@@ -62,21 +62,23 @@ def save_strategy_times(averages, output):
 
 @apply_plot_style("strategy_metrics")
 def save_strategy_metrics(averages, output):
-    fig, axes = plt.subplots(1, 2, sharey=True, width_ratios=(1, 1.35))
+    fig, axes = plt.subplots(1, 3, sharey=True, width_ratios=(1.2, 1.2, 1))
     scenarios = ["Rough map" if row["simulation"] == "rough_map"
                  else f"Unknown, {row['step_limit_cm']} cm" for row in averages]
     labels = [f"{scenario}  |  {row['planner']}" for scenario, row in zip(scenarios, averages)]
     colors = ["#087888" if row["planner"] == "A*" else "#a44b22" for row in averages]
     prefix = "" if averages[0]["trials"] == 1 else "Mean "
     axes[0].invert_yaxis()
-    for ax, field, title, number_format in (
-        (axes[0], "contacts", "contacts", "g"),
-        (axes[1], "time_s", "simulated time (s)", ".2f"),
-    ):
+    metrics = (
+        ("travel_cm", "total distance (cm)", ".2f"),
+        ("time_s", "simulated time (s)", ".2f"),
+        ("contacts", "obstacle contacts", "g"),
+    )
+    for ax, (field, title, number_format) in zip(axes, metrics):
         values = [row[field] for row in averages]
         bars = ax.barh(labels, values, color=colors, height=.66)
         ax.bar_label(bars, fmt="%" + number_format, padding=3, fontsize=9)
-        ax.set_xlim(0, max(1, max(values)) * 1.22)
+        ax.set_xlim(0, max(1, max(values)) * 1.30)
         ax.set_xlabel((prefix + title).capitalize())
         ax.set_axisbelow(True)
         for spine in ("top", "right"):
