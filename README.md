@@ -1,0 +1,57 @@
+# UR5e touch-navigation trials
+
+This Python package runs one physical experiment per invocation. The dry-run mode prints the first planned action without connecting. The supplied simulator remains available with `python run_both_simulations.py` from the `sim` folder.
+
+## Commission the experiment
+
+The probe TCP and payload must already be configured on the pendant. Configure the controller safety limits and planes for your lab’s risk assessment. Verify the entire probing plane, probe clearance, joint configurations, and contact stopping behavior with the responsible robot operator. The Python force monitor is an experimental detector. The controller’s configured safety functions provide the independent protection.
+
+Hardware behavior has been tested offline with simulated inputs. The physical runner uses asynchronous **MoveL** and **StopL** through **ur_rtde**. See the [UR5e user manual](https://www.universal-robots.com/manuals/EN/PDF/SW5_26/user-manual-UR5e-PDF_online/710-965-00_UR5e_User_Manual_en_Global.pdf) and the [ur_rtde asynchronous MoveL example](https://sdurobotics.gitlab.io/ur_rtde/pages/examples/basic_motion/move_async_example.html).
+
+Install the dependencies from the `sim` directory.
+
+```bash
+python -m pip install -r requirements.txt
+python ur5e_runner.py --scenario unknown --planner MDP --step 5
+```
+
+Copy `robot_settings.example.json` to `robot_settings.json` and enter the values validated for your probe and installation. The template contains no motion or force defaults. Capture the table frame in the robot’s base coordinates with `--teach`. Teach the three cell centers at the operating TCP height and orientation. This mode uses receive-only RTDE.
+
+```bash
+python ur5e_runner.py --teach --ip ROBOT_IP
+```
+
+For the current layout, place B1–B4 at actual lower-left coordinates **(8, 19)**, **(23, 10)**, **(37, 19)**, and **(46, 13)** cm, respectively. These positions are for the operator. Use the same fixed layout for both experiments. The software uses the rough probability map in the rough experiment and a uniform prior in the unknown experiment.
+
+## Run a trial
+
+Manually place the stationary, unloaded probe at cell **(20, 3)**, in row-column order, at the taught height and orientation before each invocation. The goal is **(20, 56)**. Log names must be unique so earlier trials are preserved.
+
+```bash
+python ur5e_runner.py --execute --ip ROBOT_IP --scenario rough --planner 'A*' --log rough_astar_01.jsonl
+python ur5e_runner.py --execute --ip ROBOT_IP --scenario unknown --planner MDP --step 5 --log unknown_mdp_5cm_01.jsonl
+```
+
+Use planner `'A*'` or `MDP` in either scenario. The unknown scenario accepts `--step 1`, `3`, or `5`. After a detected contact and retreat, the probe travels parallel to the approached
+box face in the selected increment, then makes one guarded 1 cm check in the
+original approach direction. A hit during that check causes a retreat followed
+by another parallel step. A clear check completes the 1 cm move and returns
+control immediately to the planner. This face-following mode assumes
+grid-aligned box faces. A collision on a parallel step or a workspace edge
+can trigger the same one-time direction reversal as the simulator. Repeat from the start with a new log filename for each trial.
+
+The log records the phase of each commanded move (`navigate`, `edge_follow`,
+or `edge_check`), live force, TCP pose, estimated obstacle cells, contacts,
+completed distance, total distance, and elapsed wall-clock time. Contact cells are estimated from measured TCP position and, for diagonal moves, force direction. Clear moves mark traversed center-line cells free. Physical localization and controller stopping behavior can differ from the ideal grid simulation.
+
+## Generate the simulation plots
+
+From `sim`, run the five trials for each of the eight navigation strategies.
+
+```bash
+python run_both_simulations.py
+```
+
+The script saves `occupancy_probability_maps.png`, `four_box_touch_navigation_map.png`,
+`simulation_paths.png`, `time_by_strategy.png`, and the two CSV files. The time chart
+compares the mean simulated time to goal across the eight strategies.

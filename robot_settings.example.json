@@ -1,0 +1,10 @@
+{
+  "speed_m_s": null,
+  "retreat_speed_m_s": null,
+  "acceleration_m_s2": null,
+  "stop_deceleration_m_s2": null,
+  "contact_force_n": null,
+  "abort_force_n": null,
+  "filter_tau_s": null,
+  "max_segment_seconds": null
+}
