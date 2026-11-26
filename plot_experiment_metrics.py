@@ -1,4 +1,4 @@
-"""Plot the starting occupancy maps and mean time by strategy."""
+"""Plot the starting occupancy maps and mean performance by strategy."""
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -47,11 +47,39 @@ def save_strategy_times(averages, output):
     ax.bar_label(bars, labels=[f"{value:.2f} s" for value in values], padding=5, fontsize=9)
     ax.invert_yaxis()
     ax.set_xlim(0, max(values) * 1.16)
-    ax.set_xlabel("Mean simulated time to goal (s)")
-    ax.set_title(f"Time to goal by navigation strategy  ·  {averages[0]['trials']} trials each",
+    trial_count = averages[0]["trials"]
+    time_label = "Simulated time to goal" if trial_count == 1 else "Mean simulated time to goal"
+    trials_label = "trial" if trial_count == 1 else "trials"
+    ax.set_xlabel(f"{time_label} (s)")
+    ax.set_title(f"Time to goal by navigation strategy  ·  {trial_count} {trials_label} each",
                  loc="left")
     ax.set_axisbelow(True)
     for spine in ("top", "right"):
         ax.spines[spine].set_visible(False)
+    fig.savefig(output)
+    plt.close(fig)
+
+
+@apply_plot_style("strategy_metrics")
+def save_strategy_metrics(averages, output):
+    fig, axes = plt.subplots(1, 2, sharey=True, width_ratios=(1, 1.35))
+    scenarios = ["Rough map" if row["simulation"] == "rough_map"
+                 else f"Unknown, {row['step_limit_cm']} cm" for row in averages]
+    labels = [f"{scenario}  |  {row['planner']}" for scenario, row in zip(scenarios, averages)]
+    colors = ["#087888" if row["planner"] == "A*" else "#a44b22" for row in averages]
+    prefix = "" if averages[0]["trials"] == 1 else "Mean "
+    axes[0].invert_yaxis()
+    for ax, field, title, number_format in (
+        (axes[0], "contacts", "contacts", "g"),
+        (axes[1], "time_s", "simulated time (s)", ".2f"),
+    ):
+        values = [row[field] for row in averages]
+        bars = ax.barh(labels, values, color=colors, height=.66)
+        ax.bar_label(bars, fmt="%" + number_format, padding=3, fontsize=9)
+        ax.set_xlim(0, max(1, max(values)) * 1.22)
+        ax.set_xlabel((prefix + title).capitalize())
+        ax.set_axisbelow(True)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
     fig.savefig(output)
     plt.close(fig)

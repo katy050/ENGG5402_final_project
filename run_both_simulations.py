@@ -9,7 +9,8 @@ from statistics import mean
 from four_box_trial import draw_map, fixed_layout
 from navsim import PLANNERS, run_comparison
 from plot_trial_paths import save_individual_path_animations, save_path_animation, save_path_plots
-from plot_experiment_metrics import save_probability_maps, save_strategy_times
+from plot_experiment_metrics import (save_probability_maps, save_strategy_metrics,
+                                     save_strategy_times)
 from unknown_boxes import MoveGraph, STEP_LIMITS, run_unknown_trial
 
 TRIALS = 1
@@ -78,6 +79,7 @@ def main():
     save_probability_maps(prior, figures_dir / "occupancy_probability_maps.png")
     save_path_plots(truth, traces, figures_dir)
     save_strategy_times(averages, figures_dir / "time_by_strategy.png")
+    save_strategy_metrics(averages, figures_dir / "strategy_metrics.pdf")
     if args.animate:
         animation_dir = Path("animation")
         save_individual_path_animations(truth, traces, animation_dir)

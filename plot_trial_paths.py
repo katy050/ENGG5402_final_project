@@ -37,36 +37,39 @@ def draw_workspace(ax, truth):
     ax.plot(*xy([GOAL])[0], "*", color="#82542b", ms=8, zorder=7, label="Goal")
 
 
+def draw_path(ax, truth, result):
+    draw_workspace(ax, truth)
+    ax.plot(*xy(result["path"]).T, lw=1.7, color="#066f89", zorder=4)
+    for segment in result.get("edge_moves", ()):
+        ax.plot(*xy(segment).T, color="#5941a9", lw=1.9,
+                marker=".", markersize=2.6, zorder=5)
+
+    clear_checks = [cell for _, cell, blocked in result.get("edge_checks", ())
+                    if not blocked]
+    if clear_checks:
+        ax.plot(*xy(clear_checks).T, marker="s", markersize=3,
+                markerfacecolor="white", markeredgecolor="#198269",
+                linestyle="none", zorder=6)
+
+    for segment in result["touches"]:
+        approach = xy(segment)
+        ax.plot(*approach.T, color="#c44636", ls=":", lw=1, zorder=5)
+        ax.plot(*approach[-1], "x", color="#a72f22", ms=4, mew=1, zorder=6)
+
+
 @apply_plot_style("paths")
 def save_path_plot(truth, result, title, output):
     fig, ax = plt.subplots()
     try:
-        draw_workspace(ax, truth)
+        draw_path(ax, truth, result)
         ax.set(title=title, xlabel="x (cm)", ylabel="y (cm)")
-        ax.plot(*xy(result["path"]).T, lw=1.7, color="#066f89", zorder=4)
-        for segment in result.get("edge_moves", ()):
-            ax.plot(*xy(segment).T, color="#5941a9", lw=1.9,
-                    marker=".", markersize=2.6, zorder=5)
-
-        clear_checks = [cell for _, cell, blocked in result.get("edge_checks", ())
-                        if not blocked]
-        if clear_checks:
-            ax.plot(*xy(clear_checks).T, marker="s", markersize=3,
-                    markerfacecolor="white", markeredgecolor="#198269",
-                    linestyle="none", zorder=6)
-
-        for segment in result["touches"]:
-            approach = xy(segment)
-            ax.plot(*approach.T, color="#c44636", ls=":", lw=1, zorder=5)
-            ax.plot(*approach[-1], "x", color="#a72f22", ms=4, mew=1, zorder=6)
         fig.savefig(output)
     finally:
         plt.close(fig)
 
 
-@apply_plot_style("paths")
-def save_path_legend(output):
-    handles = [
+def path_legend_handles():
+    return [
         Line2D([], [], color="#066f89", lw=1.7, label="Path"),
         Line2D([], [], color="#5941a9", lw=1.9, marker=".", markersize=2.6,
                label="Edge follow"),
@@ -78,9 +81,13 @@ def save_path_legend(output):
         Line2D([], [], marker="o", color="#198269", markersize=5, ls="none", label="Start"),
         Line2D([], [], marker="*", color="#82542b", markersize=8, ls="none", label="Goal"),
     ]
+
+
+@apply_plot_style("paths")
+def save_path_legend(output):
     fig = plt.figure()
     try:
-        fig.legend(handles=handles, ncols=3)
+        fig.legend(handles=path_legend_handles(), ncols=3)
         fig.savefig(output)
     finally:
         plt.close(fig)
@@ -107,6 +114,26 @@ def save_path_plots(truth, traces, output_dir):
                 output = output_dir / f"{path_stem(simulation, planner, limit, trial)}.png"
                 save_path_plot(truth, result, f"{label} — {planner}", output)
     save_path_legend(output_dir / "path_legend.png")
+    save_path_grid(truth, traces, output_dir / "simulation_paths.png")
+
+
+@apply_plot_style("path_grid")
+def save_path_grid(truth, traces, output):
+    """Compare the first trace for each planner and scenario."""
+    fig, axes = plt.subplots(len(PATH_ROWS), 2, sharex=True, sharey=True)
+    try:
+        for row, (simulation, limit, title) in zip(axes, PATH_ROWS):
+            for ax, planner in zip(row, ("A*", "MDP")):
+                draw_path(ax, truth, traces[(simulation, planner, limit)][0])
+                ax.set_title(f"{title} | {planner}", loc="left")
+        for ax in axes[:, 0]:
+            ax.set_ylabel("y (cm)")
+        for ax in axes[-1]:
+            ax.set_xlabel("x (cm)")
+        fig.legend(handles=path_legend_handles(), ncols=4, bbox_to_anchor=(.5, .005))
+        fig.savefig(output)
+    finally:
+        plt.close(fig)
 
 
 def animate_trial(ax, result):

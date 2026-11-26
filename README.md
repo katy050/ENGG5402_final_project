@@ -1,6 +1,6 @@
 # UR5e touch-navigation trials
 
-This Python package runs one physical experiment per invocation. The dry-run mode prints the first planned action without connecting. Run the simulator from the project directory with `python run_both_simulations.py`.
+The project uses one trial per navigation strategy. The physical runner performs one trial per invocation. Its dry-run mode prints the first planned action without connecting. Run the simulator from the project directory with `python run_both_simulations.py`.
 
 ## Commission the experiment
 
@@ -52,10 +52,12 @@ From the project directory, run one trial for each of the eight navigation strat
 python run_both_simulations.py
 ```
 
-The script saves the maps, time chart, and individual touch-navigation path
-PNGs directly in `figures/`. Within each strategy, identical trials share
-the first trial's plot. A shared key for the path symbols is saved as
-`figures/path_legend.png`. The CSV results are saved to `csv/`.
+The script saves the maps, individual paths, and a combined view of the
+eight paths in `figures/`. It also writes `strategy_metrics.pdf` with
+contact counts and simulated times, `time_by_strategy.png` with the timing
+comparison, and `path_legend.png` with the path symbols. Results are written
+to `csv/trial_results.csv` and `csv/averages.csv`. With one trial per strategy,
+each average equals the corresponding trial value.
 
 Edit `plot_settings.py` to change shared Matplotlib defaults or adjust the
 size, fonts, spacing, and grid for an individual figure or the GIF replay.
@@ -68,3 +70,9 @@ moves, and clear checks.
 ```bash
 python run_both_simulations.py --animate
 ```
+
+## Build the report
+
+Compile `project_report.tex` from the project directory with PDFLaTeX and
+BibTeX. For Overleaf, upload `project_report.tex`, `references.bib`, and the
+`figures/` directory, then select `project_report.tex` as the main document.
