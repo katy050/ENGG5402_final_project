@@ -1,6 +1,6 @@
 # UR5e touch-navigation trials
 
-This Python package runs one physical experiment per invocation. The dry-run mode prints the first planned action without connecting. The supplied simulator remains available with `python run_both_simulations.py` from the `sim` folder.
+This Python package runs one physical experiment per invocation. The dry-run mode prints the first planned action without connecting. Run the simulator from the project directory with `python run_both_simulations.py`.
 
 ## Commission the experiment
 
@@ -8,7 +8,7 @@ The probe TCP and payload must already be configured on the pendant. Configure t
 
 Hardware behavior has been tested offline with simulated inputs. The physical runner uses asynchronous **MoveL** and **StopL** through **ur_rtde**. See the [UR5e user manual](https://www.universal-robots.com/manuals/EN/PDF/SW5_26/user-manual-UR5e-PDF_online/710-965-00_UR5e_User_Manual_en_Global.pdf) and the [ur_rtde asynchronous MoveL example](https://sdurobotics.gitlab.io/ur_rtde/pages/examples/basic_motion/move_async_example.html).
 
-Install the dependencies from the `sim` directory.
+Install the dependencies from the project directory.
 
 ```bash
 python -m pip install -r requirements.txt
@@ -46,12 +46,21 @@ completed distance, total distance, and elapsed wall-clock time. Contact cells a
 
 ## Generate the simulation plots
 
-From `sim`, run the five trials for each of the eight navigation strategies.
+From the project directory, run five trials for each of the eight navigation strategies.
 
 ```bash
 python run_both_simulations.py
 ```
 
-The script saves `occupancy_probability_maps.png`, `four_box_touch_navigation_map.png`,
-`simulation_paths.png`, `time_by_strategy.png`, and the two CSV files. The time chart
-compares the mean simulated time to goal across the eight strategies.
+The script saves four PNGs in `figures/` and writes `trial_results.csv` and
+`averages.csv` to `csv/`. The time chart compares the mean
+simulated time to goal across the eight strategies.
+
+Add `--animate` to save `animation/simulation_animation.gif`.
+The GIF replays the first trial for each strategy on a shared clock at 12×
+speed and shows the probe's route, contacts and retreats, edge-following
+moves, and clear checks.
+
+```bash
+python run_both_simulations.py --animate
+```

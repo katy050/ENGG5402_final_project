@@ -6,7 +6,7 @@ from math import hypot
 import numpy as np
 
 from box_edge import FaceFollow
-from navsim import CONTACT_HANDLING_S, SETTLE_S, SPEED_CM_S
+from navsim import CONTACT_HANDLING_S, SETTLE_S, SPEED_CM_S, MoveAttempt
 from planners import GAMMA, R_CONTACT, R_GOAL, OccupancyGrid
 from world import ACTIONS, GOAL, H, START, W
 
@@ -159,6 +159,7 @@ def run_unknown_trial(occupied, graphs, planner_name, step_limit):
     largest_move = 0.0
     path = [START]
     touches = []
+    attempts = []
     for _ in range(MAX_ATTEMPTS):
         if cell == GOAL_INDEX:
             break
@@ -167,11 +168,13 @@ def run_unknown_trial(occupied, graphs, planner_name, step_limit):
         is_check = target is not None and face_follow.check_pending
         if target is None:
             face_follow = None
+            phase = "Navigate"
             graph = graphs[1]
             action = choose_action(graph, probability, cell)
             if action is None:
                 break
         else:
+            phase = "Edge check" if is_check else "Edge follow"
             graph = graphs[1 if is_check else step_limit]
             target_index = target[0] * W + target[1]
             matching = np.flatnonzero(graph.valid[:, cell] & (graph.targets[:, cell] == target_index))
@@ -179,8 +182,10 @@ def run_unknown_trial(occupied, graphs, planner_name, step_limit):
 
         largest_move = max(largest_move, graph.lengths[action])
         cell, impact, hit, travel, elapsed = execute_move(graph, action, cell, occupied, grid)
+        endpoint = divmod(cell, W)
+        attempts.append(MoveAttempt(source, impact if hit is not None else endpoint,
+                                    elapsed, hit is not None, phase))
         if hit is None:
-            endpoint = divmod(cell, W)
             path.append(endpoint)
             route += travel
         else:
@@ -203,4 +208,5 @@ def run_unknown_trial(occupied, graphs, planner_name, step_limit):
         "route_cm": route, "travel_cm": distance, "time_s": seconds,
         "largest_move_cm": largest_move, "path": path, "touches": touches,
         "edge_moves": edge_moves, "edge_checks": edge_checks,
+        "attempts": attempts,
     }

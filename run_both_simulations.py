@@ -8,7 +8,7 @@ from statistics import mean
 
 from four_box_trial import draw_map, fixed_layout
 from navsim import PLANNERS, run_comparison
-from plot_trial_paths import save_path_plot
+from plot_trial_paths import save_path_animation, save_path_plot
 from plot_experiment_metrics import save_probability_maps, save_strategy_times
 from unknown_boxes import MoveGraph, STEP_LIMITS, run_unknown_trial
 
@@ -28,6 +28,8 @@ def write_csv(path, fields, rows):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--trials", type=int, default=TRIALS)
+    parser.add_argument("--animate", action="store_true",
+                        help="Save a GIF replay of the first trial for all eight strategies.")
     args = parser.parse_args()
     if args.trials < 1:
         parser.error("--trials must be positive")
@@ -65,13 +67,23 @@ def main():
             **{field: round(mean(row[field] for row in group), 4) for field in METRICS[1:]},
         })
 
-    write_csv(Path("trial_results.csv"), TRIAL_COLUMNS, rows)
-    write_csv(Path("averages.csv"),
+    csv_dir = Path("csv")
+    csv_dir.mkdir(exist_ok=True)
+    write_csv(csv_dir / "trial_results.csv", TRIAL_COLUMNS, rows)
+    write_csv(csv_dir / "averages.csv",
               (*keys, "trials", "goals_reached", *METRICS[1:]), averages)
-    draw_map(truth, footprint_count, Path("four_box_touch_navigation_map.png"))
-    save_probability_maps(prior, Path("occupancy_probability_maps.png"))
-    save_path_plot(truth, traces, Path("simulation_paths.png"))
-    save_strategy_times(averages, Path("time_by_strategy.png"))
+    figures_dir = Path("figures")
+    figures_dir.mkdir(exist_ok=True)
+    draw_map(truth, footprint_count, figures_dir / "four_box_touch_navigation_map.png")
+    save_probability_maps(prior, figures_dir / "occupancy_probability_maps.png")
+    save_path_plot(truth, traces, figures_dir / "simulation_paths.png")
+    save_strategy_times(averages, figures_dir / "time_by_strategy.png")
+    if args.animate:
+        animation_dir = Path("animation")
+        animation_dir.mkdir(exist_ok=True)
+        animation_path = animation_dir / "simulation_animation.gif"
+        save_path_animation(truth, traces, animation_path)
+        print(f"Animation: {animation_path.resolve()}")
     for row in averages:
         step = row["step_limit_cm"]
         print(f"{row['simulation']:14} {row['planner']:3} {str(step or '-'):>2} cm | "

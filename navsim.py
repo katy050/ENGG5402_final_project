@@ -1,5 +1,6 @@
 """Run the touch-navigation comparison against one fixed obstacle mask."""
 from time import perf_counter
+from typing import NamedTuple
 
 from planners import AStarPlanner, MDPPlanner, OccupancyGrid
 from world import GOAL, START, STEP_LEN, move_cells
@@ -12,6 +13,14 @@ PLANNERS = (
     ("A*", AStarPlanner),
     ("MDP", MDPPlanner),
 )
+
+
+class MoveAttempt(NamedTuple):
+    start: tuple[float, float]
+    end: tuple[float, float]  # Destination for a clear move, impact point for a contact.
+    seconds: float
+    contact: bool
+    phase: str = "Navigate"
 
 
 def run_comparison(prior, occupied):
@@ -27,6 +36,7 @@ def run_comparison(prior, occupied):
         planning_time = 0.0
         path = [START]
         touches = []
+        attempts = []
         for _ in range(MAX_STEPS):
             if cell == GOAL:
                 break
@@ -38,19 +48,22 @@ def run_comparison(prior, occupied):
             swept = sides + [target]
             hit = next((candidate for candidate in swept if occupied[candidate]), None)
             if hit is None:
+                attempt = MoveAttempt(cell, target, STEP_LEN[action] / SPEED_CM_S + SETTLE_S, False)
                 belief.observe_free(swept)
                 cell = target
                 path.append(cell)
                 distance += STEP_LEN[action]
                 travel += STEP_LEN[action]
-                motion_time += STEP_LEN[action] / SPEED_CM_S + SETTLE_S
             else:
                 belief.observe_contact(hit)
                 impact = tuple((start + end) / 2 for start, end in zip(cell, target))
                 touches.append((cell, impact))
                 contacts += 1
                 travel += STEP_LEN[action]
-                motion_time += STEP_LEN[action] / SPEED_CM_S + CONTACT_HANDLING_S
+                attempt = MoveAttempt(cell, impact,
+                                      STEP_LEN[action] / SPEED_CM_S + CONTACT_HANDLING_S, True)
+            attempts.append(attempt)
+            motion_time += attempt.seconds
             planning_time += perf_counter() - started
         results[name] = {
             "success": cell == GOAL,
@@ -61,5 +74,6 @@ def run_comparison(prior, occupied):
             "travel": travel,
             "path": path,
             "touches": touches,
+            "attempts": attempts,
         }
     return results

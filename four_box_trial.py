@@ -60,15 +60,16 @@ def draw_box(ax, box, color, label=None, nominal=False):
 
 def draw_map(truth, footprint_count, output):
     fig, axes = plt.subplots(1, 2, figsize=(13.5, 5.6))
-    fig.subplots_adjust(left=.067, right=.981, bottom=.22, top=.79, wspace=.12)
-    fig.text(.067, .94, "Four-box touch navigation map",
-             fontsize=24, fontweight="bold", color="#142438")
+    # fig.subplots_adjust(left=.067, right=.981, bottom=.22, top=.79, wspace=.12)
+    # fig.text(.067, .94, "Four-box touch navigation map",
+    #          fontsize=24, fontweight="bold", color="#142438")
+    fig.suptitle("Four-box touch navigation map", fontsize=24)
     fig.text(.067, .878, "60 × 40 cm workspace   •   1 cm grid   •   5 cm placement-error bound",
-             fontsize=12, color="#465669")
-    axes[0].set_title("A   Possible footprints from the rough map", loc="left",
-                      fontsize=12, fontweight="bold", pad=12)
-    axes[1].set_title("B   Actual fixed positions", loc="left",
-                      fontsize=12, fontweight="bold", pad=12)
+             fontsize=12)
+    axes[0].set_title("Possible footprints from the rough map", loc="left",
+                      fontsize=16, pad=12)
+    axes[1].set_title("Actual fixed positions", loc="left",
+                      fontsize=16, pad=12)
     axes[0].imshow(np.minimum(footprint_count, 2), origin="lower",
                    extent=(0, W, 0, H), interpolation="nearest", vmin=0, vmax=2,
                    cmap=ListedColormap(["#ffffff", "#d4e6f3", "#c4a1dc"]))
@@ -171,7 +172,9 @@ def fixed_layout():
 
 def main():
     truth, true_mask, prior, footprint_count, gap, overlap_left, overlap_right, total = fixed_layout()
-    output = Path.cwd() / "four_box_touch_navigation_map.png"
+    figures_dir = Path.cwd() / "figures"
+    figures_dir.mkdir(exist_ok=True)
+    output = figures_dir / "four_box_touch_navigation_map.png"
     draw_map(truth, footprint_count, output)
     print(f"Map: {output}")
     print(f"Minimum actual edge-to-edge gap: {gap:g} cm")
